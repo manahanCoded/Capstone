@@ -2,7 +2,15 @@ DATABSE FOR users
 CREATE TABLE users(
 	id serial primary key,
 	email varchar(50) unique not null,
-    password varchar(50) not null
+    password text not null,
+	role varchar(45) not null
+)
+
+CREATE TABLE module (
+	id serial primary key,
+	title varchar(100) not null,
+	description text not null,
+	information text not null
 )
 
 DATABSE FOR JOBS

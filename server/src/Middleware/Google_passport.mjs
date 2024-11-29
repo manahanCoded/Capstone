@@ -1,6 +1,6 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth2"; 
-import db from "../Database/DB_Connect.mjs"; 
+import db from "../Database/DB_Connect.mjs";
 import env from "dotenv";
 
 
@@ -25,8 +25,7 @@ passport.use(new GoogleStrategy({
       const email = emails[0].value; 
 
       const result = await db.query("SELECT * FROM users WHERE email = $1", [email]);
-
-
+      
       if (result.rowCount > 0) {
         
         return done(null, result.rows[0]);
@@ -37,7 +36,7 @@ passport.use(new GoogleStrategy({
           email: emails[0].value
         };
 
-        const insertResult = await db.query("INSERT INTO users ( email , password) VALUES ($1, $2) RETURNING *", [newUser.email, newUser.google_id ]);
+        const insertResult = await db.query("INSERT INTO users ( email , password, role) VALUES ($1, $2, $3) RETURNING *", [newUser.email, newUser.google_id, 'client' ]);
 
         return done(null, insertResult.rows[0]); 
       }

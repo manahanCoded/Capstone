@@ -1,12 +1,12 @@
 import "../../Middleware/Local_passport.mjs";
-import "../../Middleware/Google_passport.mjs";
+import "../../Middleware/Google_passport.mjs"
 import passport from "passport";
 import db from "../../Database/DB_Connect.mjs";
 import bcrypt from "bcrypt";
 import {validationResult, matchedData} from "express-validator"
 
 import env from "dotenv"
-import axios from "axios"
+
 
 env.config()
 
@@ -106,8 +106,8 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const newUser = await db.query(
-      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
-      [email, hashedPassword]
+      "INSERT INTO users (email, password, role) VALUES ($1, $2, $3) RETURNING *",
+      [email, hashedPassword, 'client']
     );
 
     const user = newUser.rows[0];

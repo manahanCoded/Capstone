@@ -1,8 +1,8 @@
 import db from "../../Database/DB_Connect.mjs";
 
-const allPost = async (req, res) => {
+const allModule = async (req, res) => {
     try {
-      const result = await db.query("SELECT * FROM posts");
+      const result = await db.query("SELECT * FROM module");
       return res.json({ success: true, listall: result.rows });
     } catch (err) {
       console.log(err);
@@ -11,10 +11,10 @@ const allPost = async (req, res) => {
   };
   
 
-const addArticle = async (req, res) => {
+const addModule = async (req, res) => {
     try {
       const result = await db.query(
-        "INSERT INTO posts (title, description, information) VALUES ($1, $2, $3)",
+        "INSERT INTO module (title, description, information) VALUES ($1, $2, $3)",
         [req.body.title, req.body.description, req.body.information]
       );
       if (result.rowCount === 1) {
@@ -27,7 +27,7 @@ const addArticle = async (req, res) => {
 };
 
 
-const getPostId = async (req, res) => {
+const getModuleId = async (req, res) => {
     try {
       const result = await db.query("SELECT * FROM posts WHERE id = $1", [req.params.id]);
       if (result.rows.length > 0) {
@@ -42,10 +42,10 @@ const getPostId = async (req, res) => {
   };
 
 
-const editArticle = async (req, res) => {
+const editModule = async (req, res) => {
     try {
       const result = await db.query(
-        "UPDATE posts SET title = $1, description = $2, information = $3 WHERE id = $4",
+        "UPDATE module SET title = $1, description = $2, information = $3 WHERE id = $4",
         [req.body.title, req.body.description, req.body.information, req.body.ids]
       );
   
@@ -61,4 +61,4 @@ const editArticle = async (req, res) => {
   };
   
 
-export { allPost, addArticle, getPostId, editArticle };
+export { allModule, addModule, getModuleId, editModule };

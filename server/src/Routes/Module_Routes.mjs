@@ -1,14 +1,14 @@
 import { Router } from "express";
-import { addArticle, allPost, editArticle, getPostId } from "./Controllers/Module_Controller.mjs";
+import { addModule, allModule, editModule, getModuleId } from "./Controllers/Module_Controller.mjs";
 
 const router = Router() 
 
-router.get('/allPost', allPost)
+router.get('/allModule', allModule)
 
-router.post('/addArticle', addArticle)
+router.post('/addModule', addModule)
 
-router.post('/getPostId', getPostId)
+router.post('/getPostId', getModuleId)
 
-router.post('/editArticle', editArticle)
+router.post('/editModule', editModule)
 
 export default router
