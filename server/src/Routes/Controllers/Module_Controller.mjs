@@ -29,7 +29,7 @@ const addModule = async (req, res) => {
 
 const getModuleId = async (req, res) => {
     try {
-      const result = await db.query("SELECT * FROM posts WHERE id = $1", [req.params.id]);
+      const result = await db.query("SELECT * FROM module WHERE id = $1", [req.body.id]);
       if (result.rows.length > 0) {
         return res.json({ success: true, listId: result.rows });
       } else {
@@ -41,7 +41,7 @@ const getModuleId = async (req, res) => {
     }
   };
 
-
+  
 const editModule = async (req, res) => {
     try {
       const result = await db.query(

@@ -117,4 +117,24 @@ const display_job = async (req, res) => {
   }
 };
 
-export { create_job, display_job };
+const upload_appointment = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  const jobId = req.body.jobId;
+  const result = await db.query('SELECT * FROM jobs WHERE id = $1', [jobId]);
+
+  if (result.rows.length === 0) {
+    return res.status(404).send('Job not found.');
+  }
+
+  const currentApplicants = result.rows[0].applicants;
+
+  await db.query('UPDATE jobs SET applicants = $1 WHERE id = $2', [currentApplicants + 1, jobId]);
+
+  res.status(200).send('File uploaded and applicants count updated.');
+};
+
+
+
+export { create_job, display_job, upload_appointment };
