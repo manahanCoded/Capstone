@@ -1,33 +1,46 @@
-import { Router } from "express";
-import { create_job, display_job, upload_appointment } from "./Controllers/Job_Controller.mjs";
-import multer from "multer"
-import fs from 'fs';
-import path from 'path';
-// Path to the desktop uploads directory
-const uploadDir = path.join('C:', 'Users', 'Admin', 'Desktop', 'Capstone', 'server', 'uploads');
+import express, { Router } from "express";
+import { create_job, display_job, upload_appointment, display_appointments } from "./Controllers/Job_Controller.mjs";
+import multer from "multer";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
-// Ensure uploads directory exists on the desktop
+// Dynamically get the current file directory (ES module workaround for __dirname)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Path to the uploads directory, relative to the current file
+const uploadDir = path.join(__dirname, 'uploads');
+
+// Ensure uploads directory exists
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true }); // Create the uploads folder if it doesn't exist
+  fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Configure Multer for file upload
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, uploadDir ); // Directory to store uploaded files
-    },
-    filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`); // Unique filename
-    },
-  });
-  
+  destination: (req, file, cb) => {
+    cb(null, uploadDir); // Store uploaded files in the 'uploads' directory
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`); // Unique filename
+  },
+});
+
 const upload = multer({ storage });
-const appointmentFile = upload.single('file');
+const appointmentFile = upload.single("file");
 
-const router = Router()
+// Router setup
+const router = Router();
 
-router.post("/create", create_job)
-router.get("/display", display_job)
-router.post("/upload-appointment", appointmentFile ,upload_appointment)
+// Define Routes
+router.post("/create", create_job);
+router.get("/display", display_job);
+router.post("/upload-appointment", appointmentFile, upload_appointment);
+router.get("/display-appointment", display_appointments)
 
 
-export default router
+router.use("/uploads", express.static(path.join(__dirname, 'uploads')));
+
+export default router;

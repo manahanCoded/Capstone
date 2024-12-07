@@ -10,6 +10,9 @@ import cookieParser from "cookie-parser";
 import User_Routes from "./src/Routes/User_Routes.mjs";
 import Job_Routes from "./src/Routes/Job_Routes.mjs";
 import Module_Routes from "./src/Routes/Module_Routes.mjs"
+import Announcement_Routes from "./src/Routes/Announcement_Routes.mjs"
+import Dashboard_Routes from "./src/Routes/Dashboard_Routes.mjs"
+import Mail_Routes from "./src/Routes/Mail_Routes.mjs"
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -43,5 +46,8 @@ app.use(
 app.use("/api/user", User_Routes);
 app.use("/api/job", Job_Routes);
 app.use("/api/module", Module_Routes)
+app.use("/api/announcement", Announcement_Routes)
+app.use("/api/dashboard", Dashboard_Routes)
+app.use("/api/mail", Mail_Routes)
 
 app.listen(port, () => console.log(`Port ${port} is now running...`));

@@ -1,31 +1,47 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import checkJob  from "@/Configure/checkJob"; // Ensure `checkJob` is the correct import path for the type
+import checkJob from "@/Configure/checkJob"; // Ensure `checkJob` is the correct import path for the type
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import Link from "next/link";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import CloseIcon from '@mui/icons-material/Close';
 import "quill/dist/quill.snow.css";
+import checkAdmin from "@/Configure/checkAdmin";
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 export default function CheckJobPage() {
   const params = useParams();
   const router = useRouter()
+  const [user, setUser] = useState<checkAdmin | null>()
   const [job, setJob] = useState<checkJob | null>(null); // job is either `checkJob` or `null`
-
-  useEffect(()=>{
+  const [userApplication, setUserApplication] = useState({
+    name: "",
+    date: new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }).format(new Date()),
+    application: ""
+  })
+  useEffect(() => {
     async function checkUser() {
-      const res = await fetch("http://localhost:5000/api/user/profile",{
+      const res = await fetch("http://localhost:5000/api/user/profile", {
         method: "GET",
         credentials: "include",
       })
-          if (!res.ok) {
-        const data = await res.json();
+      if (!res.ok) {
         router.push("/user/login")
       }
+      const data = await res.json()
+      setUser(data)
     }
     checkUser()
-  },[])
+  }, [])
 
   useEffect(() => {
     const fetchJobData = async () => {
@@ -56,28 +72,41 @@ export default function CheckJobPage() {
 
   const handleFileUpload = async () => {
     if (!file) {
-      setUploadStatus('Please select a file to upload.');
+      setUploadStatus('Please select Resume to upload.');
       return;
     }
+  
     const formData = new FormData();
     formData.append('file', file);
+  
     if (job?.id) {
-      formData.append('jobId', job.id.toString()); 
-    } else {
-      setUploadStatus('Job ID is missing.');
-      return;
+      formData.append('jobId', job.id.toString());
     }
-
+    if (user?.email) {
+      formData.append('email', user.email);
+    }
+    if (userApplication?.date) {
+      formData.append('date', userApplication.date);
+    }
+    if (userApplication?.application) {
+      formData.append('application', userApplication.application);
+    }
+    if (userApplication?.name) {
+      formData.append('name', userApplication.name);
+    }
+  
     try {
       const response = await fetch('http://localhost:5000/api/job/upload-appointment', {
         method: 'POST',
         body: formData,
       });
-
+  
       if (response.ok) {
         setUploadStatus('File uploaded successfully!');
       } else {
-        setUploadStatus('File upload failed.');
+        const errorMessage = await response.text();
+        console.error('Upload failed:', errorMessage);
+        setUploadStatus(`File upload failed: ${errorMessage}`);
       }
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -90,21 +119,52 @@ export default function CheckJobPage() {
 
   return (
     <div className="mt-14 text-sm">
-      <section className={openApply ? "fixed h-screen inset-0 z-10 backdrop-blur-sm bg-black bg-opacity-50" : "hidden"}>
-        <div className="h-full flex justify-center items-center file-uploader">
-          <div className="h-fit flex flex-col gap-4 p-6 rounded-lg bg-white">
-            <div className="flex justify-end">
+      <form className={openApply ? "fixed h-screen inset-0 z-10 backdrop-blur-sm bg-black bg-opacity-50" : "hidden"}>
+        <div className="h-full  flex justify-center items-center file-uploader">
+          <div className="mt-14 h-5/6 lg:w-1/2  md:w-5/6 w-full flex flex-col py-4 gap-2 rounded-lg bg-white">
+            <div className="py-1 px-3 flex justify-between items-center">
+              <h2 className="text-red-900 md:text-lg  font-bold ">Upload Application Letter</h2>
               <button className="hover:bg-red-400" onClick={() => setOpenApply(false)}>
                 <CloseIcon />
               </button>
             </div>
-            <h2 className="text-red-900 md:text-3xl text-2xl font-bold py-6">Upload Application Letter</h2>
-            <input type="file" onChange={handleFileChange} />
-            <button className="p-2 bg-red-900 text-white" onClick={handleFileUpload}>Upload</button>
+            <div className="p-3 flex flex-row justify-between items-center border-y-[1px]">
+              <div className="flex items-center gap-2">
+              <AccountCircleIcon fontSize="large" />
+                  <input type="text" placeholder="Full name"  className="border-[1px] rounded-md  p-3 "
+                  value={userApplication.name}
+                  onChange={(e)=>{setUserApplication({...userApplication , name: e.target.value})}}
+                  />
+              </div>
+              <div className="text-xs text-gray-500">
+              {new Intl.DateTimeFormat('en-US', {
+                month: 'short',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true,
+              }).format(new Date())}
+              </div>
+            </div>
+            <div className="h-full flex flex-col justify-between  gap-2 ">
+              <div className="h-full  p-3 border-b-[1px]">
+              <textarea className=" p-3 h-full w-full border-[1px] " required placeholder="Write an application letter..."
+              value={userApplication.application}
+              onChange={(e)=>{setUserApplication({...userApplication , application: e.target.value})}}
+              ></textarea>
+              </div>
+            <div className="flex flex-col gap-4 px-3">
+              <p className="font-semibold">Resume:</p>
+            <input required type="file" className="w-fit" onChange={handleFileChange} />
+            <button className="self-end w-28  rounded-md p-2 bg-red-900 text-white" onClick={handleFileUpload}>Upload</button>
             {uploadStatus && <p>{uploadStatus}</p>}
+            </div>
+            </div>
           </div>
         </div>
-      </section>
+      </form>
 
       <section className="border-b-2 w-full">
         <MaxWidthWrapper className="xl:w-2/4 md:w-3/4 h-16 flex justify-between items-center">
@@ -115,12 +175,12 @@ export default function CheckJobPage() {
             >
               <p>Details</p>
             </div>
-            <div
+            {/* <div
               className={typeForm === "questions" ? "px-4 flex items-center cursor-pointer text-white bg-red-900" : "px-4 flex items-center cursor-pointer"}
               onClick={() => setTypeForm("questions")}
             >
               <p>Questions</p>
-            </div>
+            </div> */}
           </div>
           <Link
             href="/forum"
@@ -153,13 +213,13 @@ export default function CheckJobPage() {
         </MaxWidthWrapper>
       </section>
 
-      <section className={typeForm === "questions" ? "block py-14" : "hidden"}>
+      {/* <section className={typeForm === "questions" ? "block py-14" : "hidden"}>
         <MaxWidthWrapper>
           <section className="flex flex-col gap-4 md:w-2/4 p-4 md:px-8 m-auto rounded-lg bg-gray-100">
             <h1>{job?.title ?? "Job Title Not Available"}</h1>
           </section>
         </MaxWidthWrapper>
-      </section>
+      </section> */}
     </div>
   );
 }

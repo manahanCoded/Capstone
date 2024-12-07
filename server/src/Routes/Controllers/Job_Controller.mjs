@@ -117,24 +117,54 @@ const display_job = async (req, res) => {
   }
 };
 
+
+
 const upload_appointment = async (req, res) => {
-  if (!req.file) {
-    return res.status(400).send('No file uploaded.');
+  try {
+    if (!req.file) {
+      return res.status(400).send("No file uploaded.");
+    }
+
+    const { jobId, name, email, date, application } = req.body;
+    const fileUrl = `/api/job/uploads/${req.file.filename}`
+
+    if (!jobId || !name || !email || !date || !application) {
+      return res.status(400).send("Missing required fields.");
+    }
+
+    // Query the database to insert the applicant
+    const result = await db.query("SELECT * FROM jobs WHERE id = $1", [jobId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Job not found.");
+    }
+
+    const currentApplicants = result.rows[0].title;
+
+    await db.query(
+      "INSERT INTO applicants (jobid, job_title, fullname,email, date, application, resume) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+      [jobId, currentApplicants, name, email, date, application, fileUrl] 
+    );
+
+    await db.query("UPDATE jobs SET applicants = applicants + 1 WHERE id = $1", [jobId]);
+
+    res.status(200).send("File uploaded and applicants count updated.");
+  } catch (error) {
+    console.error("Error during upload:", error);
+    res.status(500).send("An error occurred.");
   }
-  const jobId = req.body.jobId;
-  const result = await db.query('SELECT * FROM jobs WHERE id = $1', [jobId]);
+};
 
-  if (result.rows.length === 0) {
-    return res.status(404).send('Job not found.');
+const display_appointments = async (req, res) => {
+  try {
+    const result = await db.query("SELECT * FROM applicants ORDER BY id DESC");
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error querying database:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-
-  const currentApplicants = result.rows[0].applicants;
-
-  await db.query('UPDATE jobs SET applicants = $1 WHERE id = $2', [currentApplicants + 1, jobId]);
-
-  res.status(200).send('File uploaded and applicants count updated.');
 };
 
 
 
-export { create_job, display_job, upload_appointment };
+export { create_job, display_job, upload_appointment, display_appointments };

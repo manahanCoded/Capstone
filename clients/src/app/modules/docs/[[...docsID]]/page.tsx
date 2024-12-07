@@ -8,7 +8,22 @@ import Modules from "./Modules";
 
 export default function Docs() {
   const [selectedModule, setSelectedModule] = useState<checkModule | null>(null);
+  
   const params = useParams();
+
+  useEffect(()=>{
+    async function checkUser() {
+      const res = await fetch("http://localhost:5000/api/user/profile",{
+        method: "GET",
+        credentials: "include",
+      })
+          if (!res.ok) {
+        const data = await res.json();
+     
+      }
+    }
+    checkUser()
+  },[])
 
   useEffect(() => {
     const fetchModuleData = async () => {

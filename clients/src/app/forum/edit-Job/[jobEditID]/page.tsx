@@ -14,15 +14,37 @@ import LocalPhoneIcon from "@mui/icons-material/LocalPhone";
 import EmailIcon from "@mui/icons-material/Email";
 import { CitySelect, StateSelect } from "react-country-state-city";
 import "react-country-state-city/dist/react-country-state-city.css";
+import "react-quill-new/dist/quill.snow.css";
 import ReactQuill from "react-quill-new";
 import EditorToolbar, { modules, formats } from "@/components/EditorToolbar";
 import checkAdmin from "@/Configure/checkAdmin";
 
+
 export default function CreateJobPage() {
-  const [checkAdmin, setCheckAdmin] = useState<checkAdmin | null>(null)
+    const [, setCheckAdmin] = useState<checkAdmin | null>(null)
+    useEffect(() => {
+      async function checkUser() {
+        const res = await fetch("http://localhost:5000/api/user/profile", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!res.ok) {
+          router.push("/user/login");
+          return;
+        }
+        const data = await res.json();
+        setCheckAdmin(data);
+  
+        if (data.role === "client") {
+          alert("Unauthorized access!");
+          router.push("/modules");
+        }
+      }
+      checkUser();
+    }, []);
+
   const [isClient, setIsClient] = useState(false);
   const [stateid, setstateid] = useState<number>(0);
-  const [typeForm, setTypeForm] = useState<string>("job");
   const [information, setInformation] = useState<checkJob>({
     id: 0,
     publisher: "",
@@ -42,19 +64,8 @@ export default function CreateJobPage() {
     date: new Date().toISOString().split("T")[0],
   });
 
-  const [newAnnouncement, setNewAnnouncement] = useState({ 
-    title: "",
-    publisher: "",
-    description: "",
-    date: new Date().toISOString().split("T")[0],
-  })
-
-  const onDescription = (value: string) => {
+   const onDescription = (value: string) => {
     setInformation({ ...information, description: value });
-  };
-
-  const onAnnouncementDescription = (value: string) => {
-    setNewAnnouncement({ ...newAnnouncement, description: value });
   };
 
   const router = useRouter();
@@ -63,35 +74,17 @@ export default function CreateJobPage() {
     setIsClient(true);
   }, []);
 
-
   useEffect(() => {
     async function checkUser() {
       try {
-        const res = await fetch("http://localhost:5000/api/user/profile", {
-          method: "GET",
-          credentials: "include",
+        const res = await axios.get("http://localhost:5000/api/user/profile", {
+          withCredentials: true,
         });
-        if (!res.ok) {
-          router.push("/user/login");
-          return;
-        }
-        const data = await res.json();
-        setCheckAdmin(data);
-
-        if (data.role === "client") {
-          alert("Unauthorized access!");
-          router.push("/modules");
-        }
 
         setInformation((prev) => ({
           ...prev,
-          publisher: data.email,
+          publisher: res.data.email,
         }));
-        setNewAnnouncement((prev) => ({
-          ...prev,
-          publisher: data.email,
-        }));
-
       } catch (err) {
         if (axios.isAxiosError(err) && err.response) {
           if (err.response.status === 401 || err.response.status === 403) {
@@ -106,17 +99,17 @@ export default function CreateJobPage() {
 
     checkUser();
   }, [router]);
-
+  
 
   async function postJob(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
+    
     try {
       const res = await axios.post(
         "http://localhost:5000/api/job/create",
         information,
         {
-          withCredentials: true,
+          withCredentials: true, 
           headers: {
             "Content-Type": "application/json",
           },
@@ -137,62 +130,18 @@ export default function CreateJobPage() {
       }
     }
   }
-
-  async function postAnnouncement(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/announcement/addAnnouncements",
-        newAnnouncement,
-        {
-          withCredentials: true,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (res.status === 201) {
-        router.push("/forum");
-      } else {
-        alert("Failed to create Announcement.");
-      }
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        console.error("Error creating Announcement:", err.response.data);
-        alert("Error creating Announcement: " + err.response.data.message || "Unknown error");
-      } else {
-        alert("Error creating Announcement.");
-        console.error(err);
-      }
-    }
-  }
+  
 
   return (
-    <div className="mt-14  justify-center text-sm">
+    <div className="mt-14 flex flex-row justify-center text-sm">
       <form onSubmit={postJob} className="w-full flex flex-col border-l-2">
         <section className="">
           <MaxWidthWrapper className="h-16 flex justify-between items-center border-b-2">
             <div className="h-16  flex flex-row">
               <div
-                className={
-                  typeForm === "job"
-                    ? "px-4 flex items-center cursor-pointer text-white bg-red-900"
-                    : "px-4 flex items-center cursor-pointer"
-                }
-                onClick={() => setTypeForm("job")}
+                className="px-4 flex items-center cursor-pointer text-white bg-red-900"
               >
-                <p>Create Job</p>
-              </div>
-              <div
-                className={
-                  typeForm === "announcement"
-                    ? "px-4 flex items-center cursor-pointer text-white bg-red-900 "
-                    : "px-4 flex items-center cursor-pointer"
-                }
-                onClick={() => setTypeForm("announcement")}
-              >
-                <p>Announcement</p>
+                <p>Edit Job</p>
               </div>
             </div>
             <Link
@@ -205,10 +154,10 @@ export default function CreateJobPage() {
           </MaxWidthWrapper>
         </section>
 
-        <section className={typeForm === "job" ? "block py-14 " : "hidden"}>
+        <section className="block py-14">
           <MaxWidthWrapper>
             <section className="flex flex-col gap-4 md:w-3/4 p-4 md:px-8  m-auto rounded-lg bg-gray-100 ">
-              <section className="flex mb-2">
+              <section className="flex justify-between md:flex-row flex-col gap-4 mb-2">
                 <div className="flex flex-col gap-2">
                   <h6 className="text-base">Contact Person</h6>
                   <div className="flex flex-row items-center gap-2">
@@ -266,6 +215,9 @@ export default function CreateJobPage() {
                       </div>
                     </section>
                   </div>
+                </div>
+                <div className="h-14 w-20 flex rounded-sm text-sm items-center justify-center bg-red-900 text-white cursor-pointer ">
+                    <p>Delete</p>
                 </div>
               </section>
 
@@ -545,10 +497,11 @@ export default function CreateJobPage() {
                     type="text"
                     required
                     placeholder=""
-                    className={`px-4 py-2 rounded-md border-[1px] border-slate-300 ${information.salary === "Unpaid"
-                      ? "text-gray-400"
-                      : "text-black"
-                      }`}
+                    className={`px-4 py-2 rounded-md border-[1px] border-slate-300 ${
+                      information.salary === "Unpaid"
+                        ? "text-gray-400"
+                        : "text-black"
+                    }`}
                     value={information.salary || "Unpaid"}
                     onChange={(e) => {
                       const numericValue = e.target.value.replace(
@@ -665,52 +618,6 @@ export default function CreateJobPage() {
                 required
                 className="px-4 py-2 rounded-lg border-2 bg-red-900 cursor-pointer text-white"
               />
-            </section>
-          </MaxWidthWrapper>
-        </section>
-      </form>
-      <form onSubmit={postAnnouncement} className="w-full flex flex-col border-l-2">
-        <section className={typeForm === "announcement" ? "block py-14 " : "hidden"}>
-          <MaxWidthWrapper>
-            <section className="flex flex-col gap-4 md:w-3/4 p-4 md:px-8  m-auto rounded-lg bg-gray-100 ">
-              {isClient && (
-                <section className="flex flex-col gap-2">
-                  <div className="mb-4">
-                    <label className="block text-gray-700 font-bold mb-2">
-                      Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={newAnnouncement.title}
-                      onChange={(e)=> setNewAnnouncement({...newAnnouncement, title : e.target.value})}
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      placeholder="Enter the title"
-                      required
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <EditorToolbar toolbarId="t2" />
-                    <ReactQuill
-                      theme="snow"
-                      value={newAnnouncement.description}
-                      onChange={onAnnouncementDescription}
-                      placeholder="Write something..."
-                      modules={modules("t2")}
-                      formats={formats}
-                      className="bg-white border rounded"
-                    />
-                  </div>
-                  <div className="flex items-center justify-end">
-                    <button
-                      type="submit"
-                      className="bg-red-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                    >
-                      Submit
-                    </button>
-                  </div>
-                </section>
-              )}
             </section>
           </MaxWidthWrapper>
         </section>

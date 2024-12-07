@@ -7,6 +7,7 @@ import axios from "axios";
 import ReactQuill from "react-quill-new";
 import EditorToolbar, { modules, formats } from "@/components/EditorToolbar";
 import checkAdmin from "@/Configure/checkAdmin";
+import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 
 interface EditPostProps {
   postList: {
@@ -95,67 +96,80 @@ const EditPost: React.FC<EditPostProps> = ({ postList, editPostID }) => {
     }
   };
 
+  const deleteModule = async()=>{
+    
+    console.log("Efo-dsfsdfsdf", editPostID)
+    const res = await axios.delete(`http://localhost:5000/api/module/deleteModules/${editPostID}`)
+    if(res.data.success){
+      router.push("/modules")
+    }
+     
+  }
+
   return (
     <div className="mt-14 container mx-auto ">
       <div className="container">
         <div className="row">
           <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-            <h3 className="text-xl font-semibold mb-4">Edit</h3>
-            <div className="form-row">
-              <div className="mb-4">
-                <label className="block text-gray-700 font-bold mb-2">
-                  Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  value={userInfo.title}
-                  onChange={onChangeValue}
-                  className="form-control w-full shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  placeholder="Title"
-                  required
-                />
+            <MaxWidthWrapper>
+              <div className="w-full flex items-center justify-between gap-2">
+              <h3 className="text-xl font-semibold mb-4">Edit</h3>
+              <button onClick={deleteModule} className="bg-red-800 py-2 px-4 rounded-md text-white hover:bg-red-900">Delete</button>
               </div>
+              <div className="form-row">
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-bold mb-2">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={userInfo.title}
+                    onChange={onChangeValue}
+                    className="form-control w-full shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    placeholder="Title"
+                    required
+                  />
+                </div>
 
-              <div className="mb-4">
-                <label className="block text-gray-700 font-bold mb-2">
-                  Description <span className="text-red-500">*</span>
-                </label>
-                <EditorToolbar toolbarId="t1" />
-                <ReactQuill
-                  theme="snow"
-                  value={userInfo.description}
-                  onChange={onDescriptionChange}
-                  placeholder="Write something awesome..."
-                  modules={modules("t1")}
-                  formats={formats}
-                />
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-bold mb-2">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <EditorToolbar toolbarId="t1" />
+                  <ReactQuill
+                    theme="snow"
+                    value={userInfo.description}
+                    onChange={onDescriptionChange}
+                    placeholder="Write something awesome..."
+                    modules={modules("t1")}
+                    formats={formats}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 font-bold mb-2">
+                    Additional Information
+                  </label>
+                  <EditorToolbar toolbarId="t2" />
+                  <ReactQuill
+                    theme="snow"
+                    value={userInfo.information}
+                    onChange={onInformationChange}
+                    placeholder="Write something awesome..."
+                    modules={modules("t2")}
+                    formats={formats}
+                  />
+                </div>
+
+                {isError && <div className="errors">{isError}</div>}
+
+                <div className="form-group col-sm-12 text-right">
+                  <button type="submit" className="bg-red-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Submit
+                  </button>
+                </div>
               </div>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-bold mb-2">
-                  Additional Information
-                </label>
-                <EditorToolbar toolbarId="t2" />
-                <ReactQuill
-                  theme="snow"
-                  value={userInfo.information}
-                  onChange={onInformationChange}
-                  placeholder="Write something awesome..."
-                  modules={modules("t2")}
-                  formats={formats}
-                />
-              </div>
-
-              <br />
-
-              {isError && <div className="errors">{isError}</div>}
-
-              <div className="form-group col-sm-12 text-right">
-                <button type="submit" className="bg-red-900 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                  Submit
-                </button>
-              </div>
-            </div>
+            </MaxWidthWrapper>
           </form>
         </div>
       </div>

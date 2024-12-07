@@ -168,3 +168,15 @@ body {
     display: none;
   }
 } 
+
+
+/* Sliding effect of quiz */
+
+.questions-container {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+.question-slide {
+  flex-shrink: 0;
+  width: 100%;
+}

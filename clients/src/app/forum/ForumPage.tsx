@@ -11,8 +11,29 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import checkAdmin from "@/Configure/checkAdmin";
+import { useRouter } from "next/navigation";
+import CircleNotificationsIcon from '@mui/icons-material/CircleNotifications';
+import checkAnnouncement from "@/Configure/checkAnnouncement";
+
 
 export default function ForumPage() {
+
+  const router = useRouter()
+
+  const [checkAdmin, setCheckAdmin] = useState<checkAdmin | null>(null)
+  useEffect(() => {
+    async function checkUser() {
+      const res = await fetch("http://localhost:5000/api/user/profile", {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+      setCheckAdmin(data);
+    }
+    checkUser();
+  }, []);
+
   const [searchKeyword, setSearchKeyword] = useState("");
   const [location, setLocation] = useState({
     valueLocation: "",
@@ -28,6 +49,8 @@ export default function ForumPage() {
 
   const [displayJobs, setDisplayJobs] = useState<checkJob[]>([]);
   const [displayOptions, setDisplayOptions] = useState<checkJob[]>([]);
+
+  const [displayAnnouncement, setDisplayAnnouncement] = useState<checkAnnouncement[]>([]);
 
   const handleSearch = async () => {
     const query = new URLSearchParams({
@@ -69,11 +92,30 @@ export default function ForumPage() {
     fetchAllJobs();
   }, []);
 
+  useEffect(() => {
+    const fetchAllAnnouncement = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/announcement/allAnnouncements");
+        const data = await res.json();
+        if (res.ok) {
+          setDisplayAnnouncement(data);
+          setDisplayAnnouncement(data);
+        } else {
+          console.error("Failed to fetch all Announcement");
+        }
+      } catch (error) {
+        console.error("Error fetching all Announcement:", error);
+      }
+    };
+
+    fetchAllAnnouncement();
+  }, []);
+
   return (
     <div className="mt-14">
       <form>
         <MaxWidthWrapper className="h-16 flex flex-row justify-between items-center border-b-2 text-sm">
-          <section className="lg:ml-60 flex flex-row border-[1px] rounded-lg overflow-hidden">
+          <section className="lg:ml-64 flex flex-row border-[1px] rounded-lg overflow-hidden">
             <input
               placeholder="Find the job you're looking for"
               type="text"
@@ -94,9 +136,8 @@ export default function ForumPage() {
           <section className="lg:flex flex-row text-gray-500  hidden">
             <div className="flex items-center h-10 px-6 border-r-2 ">
               <section
-                className={`h-16  flex flex-row items-center hover:bg-gray-300 cursor-pointer ${
-                  location.valueLocation ? "text-black" : "text-gray-500"
-                }`}
+                className={`h-16  flex flex-row items-center hover:bg-gray-300 cursor-pointer ${location.valueLocation ? "text-black" : "text-gray-500"
+                  }`}
                 onClick={() => {
                   setLocation({
                     ...location,
@@ -146,9 +187,8 @@ export default function ForumPage() {
 
             <div className="flex items-center h-10 px-6 border-r-2 ">
               <section
-                className={`h-16  flex flex-row items-center hover:bg-gray-300 cursor-pointer ${
-                  experience.valueExperience ? "text-black" : "text-gray-500"
-                }`}
+                className={`h-16  flex flex-row items-center hover:bg-gray-300 cursor-pointer ${experience.valueExperience ? "text-black" : "text-gray-500"
+                  }`}
                 onClick={() => {
                   setExperience({
                     ...experience,
@@ -209,9 +249,8 @@ export default function ForumPage() {
 
             <div className="flex items-center h-10 pl-4 pr-6 ">
               <section
-                className={`h-16  flex flex-row items-center hover:bg-gray-300 cursor-pointer ${
-                  salary.valueSalary ? "text-black" : "text-gray-500"
-                }`}
+                className={`h-16  flex flex-row items-center hover:bg-gray-300 cursor-pointer ${salary.valueSalary ? "text-black" : "text-gray-500"
+                  }`}
                 onClick={() => {
                   setSalary({ ...salary, openSalary: !salary.openSalary });
                 }}
@@ -446,19 +485,34 @@ export default function ForumPage() {
         </MaxWidthWrapper>
       </form>
 
-      <section className="h-fit py-14 bg-gray-100 ">
+      <section className="h-fit py-7 bg-gray-100 ">
+
         <MaxWidthWrapper className="flex lg:flex-row flex-col-reverse gap-8">
-          <section className="lg:w-64">
-            <h3 className="lg:text-lg md:mb-6 mb-4 font-bold">Announcement</h3>
-            <div></div>
+          <section className="lg:max-w-60 flex flex-col">
+            <h3 className="lg:text-lg md:mb-6 mb-4 font-bold">Announcements</h3>
+            {displayAnnouncement.map((announcement, index) => (
+              <section key={index} className="h-fit flex-col p-2 rounded-sm mb-2 bg-white">
+                <div className="flex flex-row gap-2 mb-2">
+                  <CircleNotificationsIcon className="" />
+                  <h1 className="text-lg font-semibold line-clamp-2">{announcement.title}</h1>
+                </div>
+                <p className="text-sm line-clamp-2 mb-2 text-[0.8rem]  text-gray-600">{announcement.description}</p>
+                <div className="w-full py-2 text-xs flex justify-end border-t-[1px] text-slate-500 border-black">
+                  <p>{new Date(announcement.date).toLocaleDateString()}</p>
+                </div>
+              </section>
+            )
+            )}
           </section>
+
+
           <section className="">
             <h3 className="lg:text-lg md:mb-6 mb-4 font-bold">Job</h3>
-            <div className="flex gap-4 flex-wrap">
+            <div className="flex md:gap-3 gap-4 flex-wrap">
               {displayJobs.map((jobs, index) => (
                 <section
                   key={index}
-                  className=" lg:w-72 md:w-60 w-56  md:py-6 py-4 md:px-4 px-3 rounded-md bg-white"
+                  className="h-fit lg:w-72 md:w-60 w-56 md:py-6 py-2 md:px-4 px-3 rounded-md bg-white"
                 >
                   <p className="flex items-center text-xs mb-4 text-slate-500">
                     <CalendarMonthOutlinedIcon className="text-lg mr-1" />
@@ -473,17 +527,26 @@ export default function ForumPage() {
                     dangerouslySetInnerHTML={{ __html: jobs.description }}
                   ></p>
                   <div className="flex flex-row flex-wrap gap-2 mt-4">
-                    <p className="border-2 px-2 py-1 rounded-lg  md:text-[0.7rem] text-[0.6rem] tracking-wide bg-violet-200 text-violet-800">
+                    <p className="border-2 px-2 py-1 rounded-lg  md:text-[0.6rem] text-[0.5rem] tracking-wide bg-violet-200 text-violet-800">
                       {jobs.city}
                     </p>
-                    <p className="border-2 px-2 py-1 rounded-lg  md:text-[0.7rem] text-[0.6rem] tracking-wide bg-green-200 text-green-800">
+                    <p className="border-2 px-2 py-1 rounded-lg   md:text-[0.6rem] text-[0.5rem] tracking-wide bg-green-200 text-green-800">
                       {jobs.experience}
                     </p>
-                    <p className="border-2 px-2 py-1 rounded-lg  md:text-[0.7rem] text-[0.6rem] tracking-wide bg-red-200 text-red-800">
+                    <p className="border-2 px-2 py-1 rounded-lg   md:text-[0.6rem] text-[0.5rem] tracking-wide bg-red-200 text-red-800">
                       {jobs.salary ? jobs.salary : "Unpaid"}
                     </p>
                   </div>
-                  <div className="flex justify-end border-t-[1px] mt-4">
+                  <div className="flex justify-end border-t-[1px] gap-2 mt-4">
+                    {checkAdmin?.role === "admin" ?
+                      <Link
+                        href={`/forum/edit-Job/${jobs.id}`}
+                        className="lg:text-sm text-xs py-2 px-4 mt-4 rounded-lg border-black hover:bg-black hover:text-white border-2 "
+                      >
+                        Edit
+                      </Link> :
+                      null
+                    }
                     <Link
                       href={`/forum/check-job/${jobs.id}`}
                       className="lg:text-sm text-xs py-2 px-4 mt-4 rounded-lg bg-black text-white"
