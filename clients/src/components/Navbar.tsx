@@ -87,15 +87,22 @@ const Navbar = () => {
                 : null
                 }
                 {user.role === "admin"?
-                <Link href={`/forum/forum-dashboard`} onClick={openProfile} className="text-sm w-full border-b-[1px] border-gray-300 flex flex-row justify-between items-center py-2 px-4 group hover:bg-red-900"
+                <Link href={`/email/accounts-dashboard`} onClick={openProfile} className="text-sm w-full border-b-[1px] border-gray-300 flex flex-row justify-between items-center py-2 px-4 group hover:bg-red-900"
                 >
                     <p className=" font-thin group-hover:text-white">
-                      Forum Dashboard
+                      Application Dashbaord
                     </p>
                     <ExitToAppIcon className="group-hover:text-white"/>
                 </Link>
                 : null
               }
+                <Link href={`/email`} onClick={openProfile} className="text-sm w-full border-b-[1px] border-gray-300 flex flex-row justify-between items-center py-2 px-4 group hover:bg-red-900"
+                >
+                    <p className=" font-thin group-hover:text-white">
+                      Email
+                    </p>
+                    <ExitToAppIcon className="group-hover:text-white"/>
+                </Link>
                 <Link href={`/profile`} onClick={openProfile} className="text-sm w-full border-b-[1px] border-gray-300 flex flex-row justify-between items-center py-2 px-4 group hover:bg-red-900"
                 >
                     <p className=" font-thin group-hover:text-white">

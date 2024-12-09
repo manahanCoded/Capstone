@@ -69,9 +69,13 @@ CREATE TABLE applicants (
 
 CREATE TABLE mail (
 	id serial primary key,
-	admin varchar(45) not null,
-	aplicant_name varchar(45) not null, 
+	parent_id INT REFERENCES mail(id) ON DELETE CASCADE,
+	jobTitle text,
+	admin varchar(255) not null,
+	aplicant_name varchar(255) not null, 
+	aplicant_email varchar(255),
 	reply text not null,
 	type varchar(45),
-	date date
+	date date,
+	is_reply BOOLEAN DEFAULT FALSE  
 )
