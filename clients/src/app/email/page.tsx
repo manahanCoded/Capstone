@@ -8,7 +8,7 @@ import UserEmail from "./user-email/UserEmail";
 
 export default function Email() {
     const router = useRouter();
-    const [checkAdmin, setCheckAdmin] = useState<any>(null); // Use appropriate type for state
+    const [checkAdmin, setCheckAdmin] = useState<any>(null);
 
     useEffect(() => {
         async function checkUser() {
@@ -43,9 +43,9 @@ export default function Email() {
 
 
 
-    if (checkAdmin?.role === "client") {
-        return <UserEmail />;
-    } else {
+    if (checkAdmin?.role === "admin") {
         return <AdminEmail />;
+    } else {
+        return <UserEmail />;
     }
 }

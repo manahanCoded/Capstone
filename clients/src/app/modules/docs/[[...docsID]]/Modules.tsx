@@ -9,12 +9,15 @@ import axios from "axios";
 import QuizItem from "@/Configure/quizItem";
 import { useToast } from "@/hooks/use-toast";
 import Dashboard from "@/components/Dashboard";
+import checkAdmin from "@/Configure/checkAdmin";
+import { useParams } from "next/navigation";
 
 interface ModuleProps {
   module: checkModule | null;
 }
 
 function Modules({ module }: ModuleProps) {
+  const [checkUser, setCheckUser] = useState<checkAdmin>();
   const [posts, setPosts] = useState<any[]>([]);
   const [openQuiz, setOpenQuiz] = useState(false);
   const [itemQuiz, setItemQuiz] = useState<QuizItem[]>([]);
@@ -25,9 +28,31 @@ function Modules({ module }: ModuleProps) {
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [wrongAnswers, setWrongAnswers] = useState<any[]>([]); // New state to track wrong answers
+  const [wrongAnswers, setWrongAnswers] = useState<any[]>([]);
+  const [attemptNumber, setAttemptNumber] = useState(1);
+  const [timeSpent, setTimeSpent] = useState(0); // State variable to track time spent
+  const [quizTimer, setQuizTimer] = useState<any>(null);
+  const [feedback, setFeedback] = useState("");
+  const [correctAnswers, setCorrectAnswers] = useState<boolean[]>([]);
 
   const { toast } = useToast();
+  const params = useParams();
+
+  // Tracks time spent (for quiz completion)
+  const [startTime, setStartTime] = useState<number>(Date.now());
+
+  useEffect(() => {
+    async function checkUser() {
+      const res = await fetch("http://localhost:5000/api/user/profile", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      setCheckUser(data);
+    }
+    checkUser();
+  }, []);
 
   useEffect(() => {
     if (Array.isArray(module)) {
@@ -45,7 +70,8 @@ function Modules({ module }: ModuleProps) {
           const response = await axios.get(
             `http://localhost:5000/api/module/allQuestions?title=${encodeURIComponent(title)}`
           );
-          setItemQuiz(response.data); // Ensure you're setting the correct property of `response`
+          setItemQuiz(response.data);
+          setStartTime(Date.now());
         } catch (error) {
           console.error("Error fetching questions:", error);
         }
@@ -54,15 +80,26 @@ function Modules({ module }: ModuleProps) {
     fetchQuestions();
   }, [posts]);
 
+
+  useEffect(() => {
+    if (startTime) {
+      const interval = setInterval(() => {
+        setTimeSpent(Math.floor((Date.now() - startTime) / 1000));
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [startTime]);
+
   const handleAnswerSelection = (selected: "A" | "B" | "C" | "D") => {
     setAnswer(selected);
     setSelectedAnswer(selected);
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (itemQuiz[currentQuizIndex].correct_option === answer) {
       setIsAnswerCorrect(true);
-      setScore(score + 1);
+      setScore((prevScore) => prevScore + 1);
       toast({
         title: "Correct Answer",
         className: "bg-green-600 text-white",
@@ -73,14 +110,12 @@ function Modules({ module }: ModuleProps) {
         title: "Incorrect",
         className: "bg-red-600 text-white",
       });
-
-      // Store the wrong answer
       const wrongAnswer = {
         question: itemQuiz[currentQuizIndex].question_text,
         correct_answer: itemQuiz[currentQuizIndex].correct_option,
         user_answer: answer,
       };
-      setWrongAnswers((prev) => [...prev, wrongAnswer]); // Add the wrong answer to the list
+      setWrongAnswers((prev) => [...prev, wrongAnswer]);
     }
 
     setAnswered(true);
@@ -93,9 +128,55 @@ function Modules({ module }: ModuleProps) {
       setAnswered(false);
     } else {
       setQuizCompleted(true);
+
+      await handleQuizCompletion();
+
       toast({
-        title: `Quiz Finished! Your score: ${score}/${itemQuiz.length}`,
+        title: `Quiz Finished! Your score: ${score + 1}/${itemQuiz.length}`,
         className: "bg-blue-600 text-white",
+      });
+    }
+  };
+
+
+  const handleRestartQuiz = () => {
+    setCurrentQuizIndex(0);
+    setAnswer("");
+    setIsAnswerCorrect(null);
+    setScore(0);
+    setQuizCompleted(false);
+    setAnswered(false);
+    setSelectedAnswer("");
+    setWrongAnswers([]); // Reset the wrong answers
+    setStartTime(Date.now()); // Restart the timer
+  };
+
+  const handleQuizCompletion = async () => {
+    const quizData = {
+      user_id: checkUser?.id,
+      module_id: module?.id,
+      score: score,
+      passed: score >= Math.ceil(itemQuiz.length * 0.5),
+      attempt_number: attemptNumber,
+      time_spent: timeSpent,
+      feedback: feedback || null,
+      completed: true,  // Set completed to true here
+    };
+
+    try {
+      await axios.post("http://localhost:5000/api/module/update-module-score", quizData, {
+        withCredentials: true,
+      });
+
+      toast({
+        title: "Quiz progress saved successfully!",
+        className: "bg-green-600 text-white",
+      });
+    } catch (error) {
+      console.error("Error saving quiz progress:", error);
+      toast({
+        title: "Failed to save quiz progress",
+        className: "bg-red-600 text-white",
       });
     }
   };
@@ -108,16 +189,6 @@ function Modules({ module }: ModuleProps) {
     }
   };
 
-  const handleRestartQuiz = () => {
-    setCurrentQuizIndex(0);
-    setAnswer("");
-    setIsAnswerCorrect(null);
-    setScore(0);
-    setQuizCompleted(false);
-    setAnswered(false);
-    setSelectedAnswer("");
-    setWrongAnswers([]); // Reset the wrong answers
-  };
 
   return (
     <div className="mt-14">
@@ -156,7 +227,8 @@ function Modules({ module }: ModuleProps) {
                   {quizCompleted === false ? (
                     <div className="w-full h-1/2 flex flex-col justify-between p-4 rounded-lg bg-white">
                       <div className="w-full flex flex-row justify-between items-center">
-                        <h1>Question {currentQuizIndex + 1}</h1>
+                        <h1 aria-live="polite">Question {currentQuizIndex + 1}</h1>
+                        <p className="text-lg" role="alert">{itemQuiz[currentQuizIndex].question_text}</p>
                         <button
                           onClick={() => setOpenQuiz(false)}
                           className="text-red-600"
@@ -219,7 +291,7 @@ function Modules({ module }: ModuleProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="w-full h-1/2 flex flex-col justify-between p-4 rounded-lg bg-white overflow-y-auto">
+                    <div className="w-full h-5/6 mt-14 flex flex-col justify-between p-4 rounded-lg bg-white overflow-y-auto">
                       <div className="w-full flex flex-row justify-between items-center">
                         <h2 className="text-lg font-bold mb-4">Quiz Finished!</h2>
                         <button
@@ -238,8 +310,9 @@ function Modules({ module }: ModuleProps) {
                           <li key={index} className="flex items-center">
                             <span className="w-8 font-bold">{index + 1}.</span>
                             <span className="flex-1">{quiz.question_text}</span>
+
                             <span
-                              className={`ml-4 ${quiz.correct_option === answer
+                              className={`ml-4 ${quiz.correct_option === selectedAnswer // Check the selected answer, not just answer state
                                   ? "text-green-600"
                                   : "text-red-600"
                                 }`}
@@ -266,19 +339,19 @@ function Modules({ module }: ModuleProps) {
 
                       {/* Restart Quiz Button */}
                       <div className="flex items-center justify-end gap-4">
-                      <button
-                        onClick={() => setOpenQuiz(false)}
-                        className="mt-8 border-2 border-black hover:bg-black hover:text-white rounded-md py-2 px-4  "
-                      >
-                        More Info
-                      </button>
+                        <button
+                          onClick={() => setOpenQuiz(false)}
+                          className="mt-8 border-2 border-black hover:bg-black hover:text-white rounded-md py-2 px-4  "
+                        >
+                          More Info
+                        </button>
 
-                      <button
-                        onClick={handleRestartQuiz}
-                        className="mt-8 border-2 bg-black text-white rounded-md py-2 px-4 hover:bg-green-600 hover:border-green-600"
-                      >
-                        Restart Quiz
-                      </button>
+                        <button
+                          onClick={handleRestartQuiz}
+                          className="mt-8 border-2 bg-black text-white rounded-md py-2 px-4 hover:bg-green-600 hover:border-green-600"
+                        >
+                          Restart Quiz
+                        </button>
                       </div>
                     </div>
                   )}

@@ -120,6 +120,40 @@ const allQuestion = async (req, res) => {
 };
 
 
+const user_score = async (req, res) => {
+  const { user_id, module_id, score, passed, attempt_number, time_spent, feedback } = req.body;
+
+  if (!user_id || !module_id || score === undefined || passed === undefined) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const existingQuiz = await db.query(
+      'SELECT * FROM module_scores WHERE user_id = $1 AND module_id = $2',
+      [user_id, module_id]
+    );
+
+    if (existingQuiz.rows.length > 0) {
+      await db.query(
+        `UPDATE module_scores 
+        SET score = $1, passed = $2, attempt_number = $3, time_spent = $4, feedback = $5 
+        WHERE user_id = $6 AND module_id = $7`,
+        [score, passed, attempt_number, time_spent, feedback, user_id, module_id]
+      );
+    } else {
+      await db.query(
+        `INSERT INTO module_scores (user_id, module_id, score, passed, attempt_number, time_spent, feedback) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [user_id, module_id, score, passed, attempt_number, time_spent, feedback]
+      );
+    }
+    res.status(200).json({ message: 'Quiz progress saved successfully!' });
+  } catch (error) {
+    console.error('Error saving quiz progress:', error);
+    res.status(500).json({ error: 'Failed to save quiz progress' });
+  }
+};
 
 
-export { allModule, addModule, getModuleId, editModule, addQuestion, allQuestion ,deleteModule};
+
+export { allModule, addModule, getModuleId, editModule, addQuestion, allQuestion ,deleteModule, user_score};

@@ -15,4 +15,5 @@ export default interface checkJob{
     street: string,
     description: string,
     date: string;
+    update_date?: string
 }

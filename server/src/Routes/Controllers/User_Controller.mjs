@@ -8,6 +8,7 @@ import {validationResult, matchedData} from "express-validator"
 import env from "dotenv"
 
 
+
 env.config()
 
 const login = (req, res) => {
@@ -154,6 +155,48 @@ const logout = (req, res) => {
   }
 };
 
+const updateUser = async(req,res) =>{
+  const { email, oldPassword, newPassword, confirmPassword } = req.body;
+
+try {
+  const findUser = await db.query("SELECT * FROM users WHERE email = $1", [email]);
+  if (findUser.rows.length === 0) {
+    return res.status(401).json({ error: "No user found" });
+  }
+
+  const user = findUser.rows[0];
+
+  if (!oldPassword) {
+    return res.status(400).json({ error: "Old password is required to update password." });
+  }
+
+  const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
+  if (!isPasswordMatch) {
+    return res.status(401).json({ error: "Old password is incorrect." });
+  }
+
+  let updatedPassword = user.password; 
+
+  if (newPassword) {
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ error: "New passwords do not match." });
+    }
+    updatedPassword = await bcrypt.hash(newPassword, 10);
+  }
+
+
+  await db.query(
+    "UPDATE users SET email = $1, password = $2 WHERE id = $3",
+    [email, updatedPassword, user.id]
+  );
+
+  res.status(200).json({ message: "User Password updated successfully!" });
+} catch (err) {
+  console.error("Update error", err);
+  return res.status(500).json({ error: "Internal Server Error" });
+}
+}
+
 const userInfo = (req, res) => {
   if(!req.isAuthenticated()){
     return res.status(401).json({message: "No user found. Unauthorized!"})
@@ -163,11 +206,35 @@ const userInfo = (req, res) => {
     id: req.user.id,
     email: req.user.email,
     role: req.user.role,
+    type : req.user.type,
   })
 };
 
+const accountsDashboard = async(req,res)=>{
+  if(!req.isAuthenticated()){
+    return res.status(401).json({message: "No user found. Unauthorized!"})
+  }
+
+  const response = await db.query("SELECT email, role, type from users")
+  res.json(response.rows)
+}
+
+
+const updateRoles = async (req,res) =>{
+  try{
+  if(!req.isAuthenticated()){
+    return res.status(401).json({message: "No user found. Unauthorized!"})
+  }
+  const {email, role} = req.body 
+  await db.query("UPDATE users SET role = $1 WHERE email = $2", [role, email])
+  res.status(200).json({ message: "User Password updated successfully!" });
+}
+catch(err){
+  res.status(500).json({ error: "Internal Server Error" });
+}
+
+}
 
 
 
-
-export { login, google_login, google_login_callback, register, logout, userInfo };
+export { login, google_login, google_login_callback, register, logout, userInfo, updateUser, accountsDashboard, updateRoles };

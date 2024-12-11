@@ -8,18 +8,10 @@ import { FormEvent, useEffect, useState } from "react";
 import axios from "axios";
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import checkAdmin from "@/Configure/checkAdmin";
+import checkApplicants from "@/Configure/checkApplicants";
 
 
-interface checkApplicants {
-    id: string
-    jobid: string
-    job_title: string
-    email: string
-    application: string
-    date: string
-    resume: string
-    fullname: string
-}
+
 
 interface reply {
     id: string
@@ -253,7 +245,7 @@ export default function AdminEmail() {
             <form>
                 <MaxWidthWrapper className="h-12 flex flex-row justify-between items-center border-b-2 ">
                     <section className=" flex flex-row justify-between gap-2 overflow-hidden ">
-                        <Link href={"/email/accounts-dashboard"} className="w-20  flex justify-center items-center hover:text-gray-500 font-semibold  px-3 py-2 cursor-pointer">
+                        <Link href={"/user/accounts-dashboard"} className="w-20  flex justify-center items-center hover:text-gray-500 font-semibold  px-3 py-2 cursor-pointer">
                             Accounts
                         </Link>
                         <Link href={"/modules/modules-dashboard"} className={`${pathName === "/modules/modules-dashboard" ? "px-3 py-2 rounded-2xl bg-gray-200 border-[1px]" : ""}w-20  flex justify-center items-center hover:text-gray-500 font-semibold cursor-pointer `}>
@@ -298,7 +290,7 @@ export default function AdminEmail() {
                                     hour: "2-digit",
                                     minute: "2-digit",
                                     hour12: true,
-                                }).format(new Date(applicant.date)); // Format the date
+                                }).format(new Date(applicant.date));
 
                                 return (
                                     <section

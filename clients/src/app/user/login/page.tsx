@@ -27,7 +27,7 @@ function Login() {
       credentials: "include",
     });
     if (!response.ok) {
-      alert("Register failed");
+      alert("Log in failed");
     } else {
       router.push("/");
     }

@@ -62,9 +62,9 @@ const Navbar = () => {
       Crypto Warriors</Link>
       <div className="h-full pt-4 flex justify-between items-center gap-12 ">
         <Link href="/modules" className={pathname === "/modules"? "px-2 h-full md:block hidden border-b-[3px] border-red-900 ": "px-2 h-full md:block hidden hover:border-b-[3px] border-red-900"}>Modules</Link>
+        <Link href="/games" className={pathname === "/games"? "px-2 h-full md:block hidden border-b-[3px] border-red-900 ": "px-2 h-full md:block hidden hover:border-b-[3px] border-red-900"}>Games</Link>
         <Link href="/forum" className={pathname === "/forum"? "px-2 h-full md:block hidden border-b-[3px] border-red-900 ": "px-2 h-full md:block hidden hover:border-b-[3px] border-red-900"}>Forum</Link>
         <Link href="/quetion" className={pathname === "/quetion"? "px-2 h-full md:block hidden border-b-[3px] border-red-900 ": "px-2 h-full md:block hidden hover:border-b-[3px] border-red-900"}>Q&A</Link>
-        <Link href="/dashboard" className={pathname === "/dashboard"? "px-2 h-full md:block hidden border-b-[3px] border-red-900 ": "px-2 h-full md:block hidden hover:border-b-[3px] border-red-900"}>Dashboard</Link>
       </div>
       {user ? (<div>
             <button
@@ -87,7 +87,7 @@ const Navbar = () => {
                 : null
                 }
                 {user.role === "admin"?
-                <Link href={`/email/accounts-dashboard`} onClick={openProfile} className="text-sm w-full border-b-[1px] border-gray-300 flex flex-row justify-between items-center py-2 px-4 group hover:bg-red-900"
+                <Link href={`/user/accounts-dashboard`} onClick={openProfile} className="text-sm w-full border-b-[1px] border-gray-300 flex flex-row justify-between items-center py-2 px-4 group hover:bg-red-900"
                 >
                     <p className=" font-thin group-hover:text-white">
                       Application Dashbaord

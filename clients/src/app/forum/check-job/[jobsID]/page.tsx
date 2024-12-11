@@ -201,10 +201,15 @@ export default function CheckJobPage() {
                 Apply Now
               </button>
             </div>
+            <div className="flex flex-col  justify-between gap-3">
             <div className="flex flex-row gap-3">
-              <p className="border-[1px] rounded-xl p-1">{job?.state ?? "State Not Available"}</p>
-              <p className="border-[1px] rounded-xl p-1">{job?.city ?? "City Not Available"}</p>
-              <p className="border-[1px] rounded-xl p-1">{job?.date ? new Date(job.date).toLocaleDateString() : "Date Not Available"}</p>
+              <p className="border-[1px] rounded-xl px-2 py-1">{job?.state ?? "State Not Available"}</p>
+              <p className="border-[1px] rounded-xl px-2 py-1">{job?.city ?? "City Not Available"}</p>
+              <p className="border-[1px] rounded-xl px-2 py-1">{job?.date ? new Date(job.date).toLocaleDateString() : "Date Not Available"}</p>
+            </div>
+            <div>
+            <p className="border-[1px] rounded-xl px-2 w-fit py-1">Updated: {job?.update_date ? new Date(job.date).toLocaleDateString() : "No updates"}</p>
+            </div>
             </div>
             <div>
               <p className="ql-editor" dangerouslySetInnerHTML={{ __html: job?.description ?? "No description available" }}></p>

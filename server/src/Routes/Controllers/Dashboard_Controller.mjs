@@ -30,7 +30,7 @@ const getAiResponse = async (req, res) => {
     });
 
     const apiResponse = completion.choices[0].message.content;
-    console.log('API Response:', apiResponse);
+
 
     // Try to parse the response into JSON
     const cleanedJsonString = apiResponse.match(/\[.*\]/s)?.[0];
@@ -45,5 +45,8 @@ const getAiResponse = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+
+
 
 export { getAiResponse };

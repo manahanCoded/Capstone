@@ -19,7 +19,7 @@ import EditorToolbar, { modules, formats } from "@/components/EditorToolbar";
 import checkAdmin from "@/Configure/checkAdmin";
 
 export default function CreateJobPage() {
-  const [checkAdmin, setCheckAdmin] = useState<checkAdmin | null>(null)
+  const [, setCheckAdmin] = useState<checkAdmin | null>(null)
   const [isClient, setIsClient] = useState(false);
   const [stateid, setstateid] = useState<number>(0);
   const [typeForm, setTypeForm] = useState<string>("job");

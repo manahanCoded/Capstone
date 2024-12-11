@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import { create_job, display_job, upload_appointment, display_appointments } from "./Controllers/Job_Controller.mjs";
+import { create_job, display_job, upload_appointment, display_appointments, displayUser_appointments, specific_job, upDatejob } from "./Controllers/Job_Controller.mjs";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
@@ -39,7 +39,9 @@ router.post("/create", create_job);
 router.get("/display", display_job);
 router.post("/upload-appointment", appointmentFile, upload_appointment);
 router.get("/display-appointment", display_appointments)
-
+router.get("/display-user-appointment/:user", displayUser_appointments)
+router.get("/specific-job/:id", specific_job)
+router.put("/upDatejob/:jobEditID", upDatejob)
 
 router.use("/uploads", express.static(path.join(__dirname, 'uploads')));
 

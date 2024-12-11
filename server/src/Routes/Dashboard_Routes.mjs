@@ -6,4 +6,5 @@ const router = Router()
 router.post('/allDashboards', getAiResponse)
 
 
+
 export default router

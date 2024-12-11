@@ -36,7 +36,7 @@ passport.use(new GoogleStrategy({
           email: emails[0].value
         };
 
-        const insertResult = await db.query("INSERT INTO users ( email , password, role) VALUES ($1, $2, $3) RETURNING *", [newUser.email, newUser.google_id, 'client' ]);
+        const insertResult = await db.query("INSERT INTO users ( email , password, role, type) VALUES ($1, $2, $3, $4) RETURNING *", [newUser.email, newUser.google_id, 'client', 'google' ]);
 
         return done(null, insertResult.rows[0]); 
       }

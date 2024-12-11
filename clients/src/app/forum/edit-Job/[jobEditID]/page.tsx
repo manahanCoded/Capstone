@@ -4,7 +4,7 @@ import axios from "axios";
 import "react-quill-new/dist/quill.snow.css";
 import { useState, useEffect, FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import checkJob from "@/Configure/checkJob";
@@ -21,104 +21,128 @@ import checkAdmin from "@/Configure/checkAdmin";
 
 
 export default function CreateJobPage() {
-    const [, setCheckAdmin] = useState<checkAdmin | null>(null)
-    useEffect(() => {
-      async function checkUser() {
-        const res = await fetch("http://localhost:5000/api/user/profile", {
-          method: "GET",
-          credentials: "include",
-        });
-        if (!res.ok) {
-          router.push("/user/login");
-          return;
-        }
-        const data = await res.json();
-        setCheckAdmin(data);
-  
-        if (data.role === "client") {
-          alert("Unauthorized access!");
-          router.push("/modules");
-        }
-      }
-      checkUser();
-    }, []);
+  const router = useRouter();
+  const params = useParams()
+  const jobEditID = params.jobEditID;
 
-  const [isClient, setIsClient] = useState(false);
-  const [stateid, setstateid] = useState<number>(0);
-  const [information, setInformation] = useState<checkJob>({
-    id: 0,
-    publisher: "",
+  const [checkAdmin, setCheckAdmin] = useState<checkAdmin | null>(null);
+  const [specificJob, setSpecificJob] = useState<checkJob | null>(null);
+  const [information, setInformation] = useState({
     name: "",
-    phone: 0,
+    phone: "",
     email: "",
-    applicants: 0,
     title: "",
+    jobtype: "",
     remote: "",
     experience: "",
-    jobtype: "",
+    salary: "",
     state: "",
     city: "",
     street: "",
-    salary: "",
     description: "",
     date: new Date().toISOString().split("T")[0],
   });
 
-   const onDescription = (value: string) => {
-    setInformation({ ...information, description: value });
+
+  const onDescription = (value: string) => {
+    setInformation({
+      ...information,
+      description: value,
+    });
   };
 
-  const router = useRouter();
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
+  const [isClient, setIsClient] = useState(false);
+  const [stateid, setStateid] = useState<number>(0);
+  // Check user access and role
   useEffect(() => {
     async function checkUser() {
-      try {
-        const res = await axios.get("http://localhost:5000/api/user/profile", {
-          withCredentials: true,
-        });
+      const res = await fetch("http://localhost:5000/api/user/profile", {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        router.push("/user/login");
+        return;
+      }
+      const data = await res.json();
+      setCheckAdmin(data);
 
-        setInformation((prev) => ({
-          ...prev,
-          publisher: res.data.email,
-        }));
-      } catch (err) {
-        if (axios.isAxiosError(err) && err.response) {
-          if (err.response.status === 401 || err.response.status === 403) {
-            router.push("/user/login");
-          }
-        } else {
-          alert("Failed to fetch user profile.");
-          console.error(err);
-        }
+      if (data.role === "client") {
+        alert("Unauthorized access!");
+        router.push("/modules");
       }
     }
-
     checkUser();
-  }, [router]);
-  
+  }, []);
 
-  async function postJob(e: FormEvent<HTMLFormElement>) {
+
+  useEffect(() => {
+    if (specificJob) {
+
+      setIsClient(true);
+      setInformation({
+        name: specificJob.name || "",
+        phone: specificJob.phone ? specificJob.phone.toString() : "",
+        email: specificJob.email || "",
+        title: specificJob.title || "",
+        jobtype: specificJob.jobtype || "",
+        remote: specificJob.remote || "",
+        experience: specificJob.experience || "",
+        salary: specificJob.salary || "",
+        state: specificJob.state || "",
+        city: specificJob.city || "",
+        street: specificJob.street || "",
+        description: specificJob.description || "",
+        date: new Date().toISOString().split("T")[0],
+      });
+    }
+  }, [specificJob]);
+
+  // Fetch specific job data
+  useEffect(() => {
+    if (jobEditID) {
+      async function handleSpecificJob() {
+        try {
+          const response = await axios.get(
+            `http://localhost:5000/api/job/specific-job/${jobEditID}`
+          );
+          setSpecificJob(response.data);
+        } catch (error) {
+          console.error("Error fetching the specific job:", error);
+        }
+      }
+      handleSpecificJob();
+    }
+  }, [jobEditID]);
+
+  // Handle form field updates dynamically
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setInformation((prevInfo) => ({
+      ...prevInfo,
+      [name]: value,
+    }));
+  };
+
+  // Handle form submission for editing job
+  async function editJob(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/job/create",
+      const res = await axios.put(
+        `http://localhost:5000/api/job/upDatejob/${jobEditID}`,
         information,
         {
-          withCredentials: true, 
+          withCredentials: true,
           headers: {
             "Content-Type": "application/json",
           },
         }
       );
       if (res.status === 201) {
+        alert("Update Successful")
         router.push("/forum");
       } else {
-        alert("Failed to create job.");
+        alert("Failed to Update job.");
       }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
@@ -130,11 +154,11 @@ export default function CreateJobPage() {
       }
     }
   }
-  
+
 
   return (
     <div className="mt-14 flex flex-row justify-center text-sm">
-      <form onSubmit={postJob} className="w-full flex flex-col border-l-2">
+      <form onSubmit={editJob} className="w-full flex flex-col border-l-2">
         <section className="">
           <MaxWidthWrapper className="h-16 flex justify-between items-center border-b-2">
             <div className="h-16  flex flex-row">
@@ -168,33 +192,26 @@ export default function CreateJobPage() {
                         <input
                           type="text"
                           required
+                          name="name"
                           className="p-2 rounded-md"
                           placeholder="Name"
-                          onChange={(e) => {
-                            setInformation({
-                              ...information,
-                              name: e.target.value,
-                            });
-                          }}
+                          value={information.name}
+                          onChange={onInputChange}
                         />
                       </div>
 
                       <div className="pl-2 border-[1px] rounded-md border-slate-300 bg-white">
                         <LocalPhoneIcon />
                         <input
-                          type="number"
-                          required
-                          className="p-2 rounded-md"
-                          placeholder="Phone"
-                          onChange={(
-                            e: React.ChangeEvent<HTMLInputElement>
-                          ) => {
-                            const value = e.target.value;
+                          type="text"
+                          value={information.phone}
+                          onChange={(e) => {
                             setInformation({
                               ...information,
-                              phone: parseInt(value),
+                              phone: e.target.value,
                             });
                           }}
+                          placeholder="Enter phone number"
                         />
                       </div>
 
@@ -205,6 +222,7 @@ export default function CreateJobPage() {
                           required
                           className="p-2 rounded-md"
                           placeholder="Email"
+                          value={information.email}
                           onChange={(e) => {
                             setInformation({
                               ...information,
@@ -217,7 +235,7 @@ export default function CreateJobPage() {
                   </div>
                 </div>
                 <div className="h-14 w-20 flex rounded-sm text-sm items-center justify-center bg-red-900 text-white cursor-pointer ">
-                    <p>Delete</p>
+                  <p>Delete</p>
                 </div>
               </section>
 
@@ -227,6 +245,7 @@ export default function CreateJobPage() {
                   type="text"
                   required
                   placeholder="Job Title"
+                  value={information.title}
                   className="px-4 py-2 rounded-md border-[1px] border-slate-300"
                   onChange={(e) => {
                     setInformation({ ...information, title: e.target.value });
@@ -245,6 +264,7 @@ export default function CreateJobPage() {
                         name="jobType"
                         className="hidden peer"
                         value="Internship"
+                        checked={information.jobtype === "Internship"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -252,17 +272,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300  peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.jobtype === "Internship" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Internship
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="jobType"
                         className="hidden peer"
                         value="Freelance"
+                        checked={information.jobtype === "Freelance"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -270,17 +294,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300  peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.jobtype === "Freelance" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Freelance
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="jobType"
                         className="hidden peer"
                         value="Contract"
+                        checked={information.jobtype === "Contract"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -288,17 +316,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300  peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.jobtype === "Contract" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Contract
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="jobType"
                         className="hidden peer"
                         value="Project"
+                        checked={information.jobtype === "Project"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -306,17 +338,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300  peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.jobtype === "Project" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Project
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="jobType"
                         className="hidden peer"
                         value="Part-time"
+                        checked={information.jobtype === "Part-time"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -324,17 +360,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.jobtype === "Part-time" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Part-time
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="jobType"
                         className="hidden peer"
                         value="Full-time"
+                        checked={information.jobtype === "Full-time"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -342,8 +382,10 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.jobtype === "Full-time" ? "text-red-600" : "text-gray-700"}  peer-checked:border-red-600 peer-checked:bg-white`}
+                      >
                         Full-time
                       </span>
                     </label>
@@ -360,6 +402,7 @@ export default function CreateJobPage() {
                         name="remote"
                         className="hidden peer"
                         value="On-site"
+                        checked={information.remote === "On-site"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -367,17 +410,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.remote === "On-site" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         On-site
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="remote"
                         className="hidden peer"
                         value="Hybrid-remote"
+                        checked={information.remote === "Hybrid-remote"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -385,17 +432,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.remote === "Hybrid-remote" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Hybrid-remote
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="remote"
                         className="hidden peer"
                         value="Full remote"
+                        checked={information.remote === "Full remote"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -403,13 +454,16 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.remote === "Full remote" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Full remote
                       </span>
                     </label>
                   </div>
                 </div>
+
 
                 {/* Experience options */}
                 <div className="flex flex-col gap-2">
@@ -421,6 +475,7 @@ export default function CreateJobPage() {
                         name="experience"
                         className="hidden peer"
                         value="Entry-Level"
+                        checked={information.experience === "Entry-Level"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -428,17 +483,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.experience === "Entry-Level" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Entry-Level
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="experience"
                         className="hidden peer"
                         value="Mid-Level"
+                        checked={information.experience === "Mid-Level"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -446,17 +505,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.experience === "Mid-Level" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Mid-Level
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="experience"
                         className="hidden peer"
                         value="Senior-Level"
+                        checked={information.experience === "Senior-Level"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -464,17 +527,21 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.experience === "Senior-Level" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Senior-Level
                       </span>
                     </label>
+
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="radio"
                         name="experience"
                         className="hidden peer"
                         value="Managerial"
+                        checked={information.experience === "Managerial"}
                         onChange={(e) => {
                           setInformation({
                             ...information,
@@ -482,8 +549,10 @@ export default function CreateJobPage() {
                           });
                         }}
                       />
-                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white-600"></div>
-                      <span className="ml-2 peer-checked:text-red-600">
+                      <div className="w-4 h-4 rounded-full border-4 border-gray-300 peer-checked:border-red-600 peer-checked:bg-white"></div>
+                      <span
+                        className={`ml-2 ${information.experience === "Managerial" ? "text-red-600" : "text-gray-700"} peer-checked:text-red-600`}
+                      >
                         Managerial
                       </span>
                     </label>
@@ -497,11 +566,10 @@ export default function CreateJobPage() {
                     type="text"
                     required
                     placeholder=""
-                    className={`px-4 py-2 rounded-md border-[1px] border-slate-300 ${
-                      information.salary === "Unpaid"
-                        ? "text-gray-400"
-                        : "text-black"
-                    }`}
+                    className={`px-4 py-2 rounded-md border-[1px] border-slate-300 ${information.salary === "Unpaid"
+                      ? "text-gray-400"
+                      : "text-black"
+                      }`}
                     value={information.salary || "Unpaid"}
                     onChange={(e) => {
                       const numericValue = e.target.value.replace(
@@ -543,7 +611,7 @@ export default function CreateJobPage() {
                       value={information.state}
                       // eslint-disable-next-line
                       onChange={(e: any) => {
-                        setstateid(e.id);
+                        setStateid(e.id); // Corrected the typo here
                         setInformation({
                           ...information,
                           state: e.name.toString(),
@@ -597,17 +665,12 @@ export default function CreateJobPage() {
               <section className="flex flex-col gap-2">
                 {isClient && (
                   <div className="mb-4">
-                    <label className="block text-base text-gray-700 mb-2">
-                      Job Description
-                    </label>
-                    <EditorToolbar toolbarId="t1" />
+                    <EditorToolbar toolbarId="t2" />
                     <ReactQuill
                       theme="snow"
                       value={information.description}
-                      onChange={onDescription}
-                      placeholder="Write something awesome..."
-                      modules={modules("t1")}
-                      formats={formats}
+                      onChange={(value) => setInformation({ ...information, description: value })}
+                      placeholder="Write something..."
                       className="bg-white border rounded"
                     />
                   </div>

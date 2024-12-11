@@ -104,7 +104,6 @@ const upload_appointment = async (req, res) => {
       return res.status(400).send("Missing required fields.");
     }
 
-    // Query the database to insert the applicant
     const result = await db.query("SELECT * FROM jobs WHERE id = $1", [jobId]);
 
     if (result.rows.length === 0) {
@@ -137,5 +136,106 @@ const display_appointments = async (req, res) => {
   }
 };
 
+const displayUser_appointments = async(req, res) => {
+  try {
+    const {user} = req.params
+    const result = await db.query("SELECT * FROM applicants WHERE email = $1 ORDER BY id DESC", [user]);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Error querying database:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
-export { create_job, display_job, upload_appointment, display_appointments };
+const specific_job = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const job = await db.query("SELECT * FROM jobs WHERE id = $1", [id]);
+
+    if (job.rows.length === 0) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    res.status(200).json(job.rows[0]); 
+  } catch (error) {
+    console.error("Error fetching specific job:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const upDatejob = async( req, res)=>{
+  const jobEditID = req.params.jobEditID; 
+  const {
+    name,
+    phone,
+    email,
+    title,
+    jobtype,
+    remote,
+    experience,
+    salary,
+    state,
+    city,
+    street,
+    description,
+    date
+  } = req.body; 
+
+
+  if (!name || !title || !jobtype || !salary) {
+    return res.status(400).json({ message: "Required fields are missing" });
+  }
+
+  try {
+    const query = `
+      UPDATE jobs
+      SET
+        name = $1,
+        phone = $2,
+        email = $3,
+        title = $4,
+        jobtype = $5,
+        remote = $6,
+        experience = $7,
+        salary = $8,
+        state = $9,
+        city = $10,
+        street = $11,
+        description = $12,
+        update_date = $13
+      WHERE id = $14
+      RETURNING *;`;
+
+  
+    const result = await db.query(query, [
+      name,
+      phone,
+      email,
+      title,
+      jobtype,
+      remote,
+      experience,
+      salary,
+      state,
+      city,
+      street,
+      description,
+      date,
+      jobEditID, 
+    ]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Job not found" });
+    }
+
+    res.status(201).json({ message: "Job updated successfully", job: result.rows[0] });
+  } catch (err) {
+    console.error("Error updating job:", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+export { create_job, display_job, upload_appointment, display_appointments, displayUser_appointments, specific_job, upDatejob };
