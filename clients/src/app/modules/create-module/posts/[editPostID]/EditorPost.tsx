@@ -97,13 +97,10 @@ const EditPost: React.FC<EditPostProps> = ({ postList, editPostID }) => {
   };
 
   const deleteModule = async()=>{
-    
-    console.log("Efo-dsfsdfsdf", editPostID)
-    const res = await axios.delete(`http://localhost:5000/api/module/deleteModules/${editPostID}`)
-    if(res.data.success){
+
+    await axios.delete(`http://localhost:5000/api/module/deleteModules/${editPostID}`)
       router.push("/modules")
-    }
-     
+
   }
 
   return (

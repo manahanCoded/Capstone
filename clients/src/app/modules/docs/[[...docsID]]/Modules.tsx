@@ -32,9 +32,9 @@ function Modules({ module }: ModuleProps) {
   const [attemptNumber, setAttemptNumber] = useState(1);
   const [timeSpent, setTimeSpent] = useState(0); // State variable to track time spent
   const [quizTimer, setQuizTimer] = useState<any>(null);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<string>("");
   const [correctAnswers, setCorrectAnswers] = useState<boolean[]>([]);
-
+  const [isQuizCompleted, setIsQuizCompleted] = useState(false);
   const { toast } = useToast();
   const params = useParams();
 
@@ -101,15 +101,17 @@ function Modules({ module }: ModuleProps) {
       setIsAnswerCorrect(true);
       setScore((prevScore) => prevScore + 1);
       toast({
-        title: "Correct Answer",
+        title: `Correct Answer! Your current score: ${score + 1}`,
         className: "bg-green-600 text-white",
       });
     } else {
       setIsAnswerCorrect(false);
+
       toast({
         title: "Incorrect",
         className: "bg-red-600 text-white",
       });
+
       const wrongAnswer = {
         question: itemQuiz[currentQuizIndex].question_text,
         correct_answer: itemQuiz[currentQuizIndex].correct_option,
@@ -128,12 +130,20 @@ function Modules({ module }: ModuleProps) {
       setAnswered(false);
     } else {
       setQuizCompleted(true);
-
       await handleQuizCompletion();
 
+    }
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuizIndex > 0) {
+      setCurrentQuizIndex(currentQuizIndex - 1);
+      setAnswered(false);
+      setAnswer("");
+
       toast({
-        title: `Quiz Finished! Your score: ${score + 1}/${itemQuiz.length}`,
-        className: "bg-blue-600 text-white",
+        title: `You're back at question ${currentQuizIndex}`,
+        className: "bg-yellow-600 text-white",
       });
     }
   };
@@ -151,7 +161,14 @@ function Modules({ module }: ModuleProps) {
     setStartTime(Date.now()); // Restart the timer
   };
 
+  const handleSetFeedback = (feedback: string) => {
+    setFeedback(feedback);
+  };
+
   const handleQuizCompletion = async () => {
+    if (!checkUser?.id) {
+      alert("No User pls login to save progress")
+    }
     const quizData = {
       user_id: checkUser?.id,
       module_id: module?.id,
@@ -160,10 +177,12 @@ function Modules({ module }: ModuleProps) {
       attempt_number: attemptNumber,
       time_spent: timeSpent,
       feedback: feedback || null,
-      completed: true,  // Set completed to true here
+      completed: true,
+      prefect_score: itemQuiz.length
     };
-
+    setIsQuizCompleted(true);
     try {
+      console.log("Quiz Data:", quizData);
       await axios.post("http://localhost:5000/api/module/update-module-score", quizData, {
         withCredentials: true,
       });
@@ -189,6 +208,12 @@ function Modules({ module }: ModuleProps) {
     }
   };
 
+  useEffect(() => {
+    if (quizCompleted) {
+      handleQuizCompletion();
+    }
+  }, [quizCompleted]);
+
 
   return (
     <div className="mt-14">
@@ -210,14 +235,23 @@ function Modules({ module }: ModuleProps) {
               />
             </div>
           ))}
-          {quizCompleted && <Dashboard wrongAnswers={wrongAnswers} />}
-          <button
+
+          <Dashboard
+            wrongAnswers={wrongAnswers}
+            onSetFeedback={handleSetFeedback}
+            isQuizCompleted={isQuizCompleted}
+          />
+          < button
             className="w-[70%] h-10 m-auto mt-10 flex items-center justify-center font-semibold text-white rounded-md bg-red-800 hover:bg-red-900"
             onClick={() => setOpenQuiz(true)}
           >
             <PsychologyAltIcon />
             Quiz
           </button>
+          {score === itemQuiz.length ? 
+          <p className="w-[70%] h-10 m-auto mt-4 flex items-center justify-center font-semibol">Congratulations Perfect Quiz!</p> :
+            null
+          }
 
           {openQuiz ? (
             <div className="fixed inset-0 z-40 bg-[#2a212190]">
@@ -228,7 +262,6 @@ function Modules({ module }: ModuleProps) {
                     <div className="w-full h-1/2 flex flex-col justify-between p-4 rounded-lg bg-white">
                       <div className="w-full flex flex-row justify-between items-center">
                         <h1 aria-live="polite">Question {currentQuizIndex + 1}</h1>
-                        <p className="text-lg" role="alert">{itemQuiz[currentQuizIndex].question_text}</p>
                         <button
                           onClick={() => setOpenQuiz(false)}
                           className="text-red-600"
@@ -237,7 +270,7 @@ function Modules({ module }: ModuleProps) {
                         </button>
                       </div>
                       <div className="flex flex-col gap-4 items-center">
-                        <p className="text-lg">{itemQuiz[currentQuizIndex].question_text}</p>
+                        <p className="text-lg mb-6">{itemQuiz[currentQuizIndex].question_text}</p>
                         <div className="grid grid-cols-2 grid-rows-2 gap-4">
                           <button
                             onClick={() => handleAnswerSelection("A")}
@@ -275,6 +308,7 @@ function Modules({ module }: ModuleProps) {
                       </div>
 
                       {/* Next and Back Buttons */}
+
                       <div className="w-full flex flex-row justify-end gap-4 items-center text-sm">
                         <button
                           onClick={showBackQuiz}
@@ -301,7 +335,7 @@ function Modules({ module }: ModuleProps) {
                           CLOSE
                         </button>
                       </div>
-                      <p className="mb-4 text-lg">
+                      <p className="mb-4 text-2xl text-green-600">
                         Your score: {score}/{itemQuiz.length}
                       </p>
                       <h3 className="text-lg font-semibold">Correct Answers:</h3>
@@ -312,9 +346,9 @@ function Modules({ module }: ModuleProps) {
                             <span className="flex-1">{quiz.question_text}</span>
 
                             <span
-                              className={`ml-4 ${quiz.correct_option === selectedAnswer // Check the selected answer, not just answer state
-                                  ? "text-green-600"
-                                  : "text-red-600"
+                              className={`ml-4 ${quiz.correct_option === selectedAnswer
+                                ? "text-green-600"
+                                : "text-red-600"
                                 }`}
                             >
                               Correct Answer: {quiz.correct_option}
@@ -361,8 +395,8 @@ function Modules({ module }: ModuleProps) {
           ) : null}
 
         </div>
-      </MaxWidthWrapper>
-    </div>
+      </MaxWidthWrapper >
+    </div >
   );
 }
 

@@ -12,6 +12,10 @@ import checkAnnouncement from "@/Configure/checkAnnouncement";
 import axios from "axios";
 
 
+interface AnnouncementSectionProps {
+  displayAnnouncement: checkAnnouncement[];
+}
+
 export default function ForumPage() {
 
   const router = useRouter()
@@ -32,7 +36,6 @@ export default function ForumPage() {
 
   const [displayJobs, setDisplayJobs] = useState<checkJob[]>([]);
   const [displayOptions, setDisplayOptions] = useState<checkJob[]>([]);
-
   const [displayAnnouncement, setDisplayAnnouncement] = useState<checkAnnouncement[]>([]);
 
   const handleSearchChange = (query: string) => {
@@ -50,8 +53,6 @@ export default function ForumPage() {
       job.street?.toLowerCase().includes(lowerCaseQuery) ||
       job.date?.toLowerCase().includes(lowerCaseQuery)
     );
-
-    console.log("Filtered Jobs:", filteredJobs);
     setDisplayOptions(filteredJobs);
   };
 
@@ -80,7 +81,7 @@ export default function ForumPage() {
         const res = await axios.get("http://localhost:5000/api/announcement/allAnnouncements");
   
         if (res.status === 200) {
-          setDisplayAnnouncement(res.data); // Access the data from the response
+          setDisplayAnnouncement(res.data); 
         } else {
           console.error("Failed to fetch all announcements");
         }
@@ -92,15 +93,27 @@ export default function ForumPage() {
     fetchAllAnnouncement();
   }, []);
 
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<checkAnnouncement | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleAnnouncementClick = (announcement: checkAnnouncement) => {
+    setSelectedAnnouncement(announcement);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedAnnouncement(null);
+  };
 
   return (
     <div className="mt-14">
-      <section className="flex items-center mt-14 w-full h-14 border-b-[1px] text-xs">
+      <section className="flex items-center mt-14 w-full h-16 border-b-[1px] text-xs">
         <section className="w-fit lg:ml-72 flex flex-row items-center border-[1px] rounded-lg overflow-hidden bg-slate-100">
           <input
             placeholder="Find the job you're looking for"
             type="text"
-            className="w-64 py-2 pl-4 outline-none bg-slate-100"
+            className="h-10 w-64 py-2 pl-4 outline-none bg-slate-100"
             onChange={(e) => handleSearchChange(e.target.value)}
           />
           <SearchOutlinedIcon />
@@ -108,20 +121,41 @@ export default function ForumPage() {
       </section>
       <section className="h-fit py-7 bg-gray-100 ">
         <MaxWidthWrapper className="flex lg:flex-row flex-col-reverse gap-8">
-          <section className="lg:max-w-60 flex flex-col">
+        <section className="lg:max-w-60 flex flex-col">
             <h3 className="lg:text-lg md:mb-6 mb-4 font-bold">Announcements</h3>
             {displayAnnouncement.map((announcement, index) => (
-              <section key={index} className="h-fit flex-col p-2 rounded-sm mb-2 bg-white">
+              <section
+                key={index}
+                className="h-fit flex-col p-2 rounded-sm mb-2 bg-white cursor-pointer"
+                onClick={() => handleAnnouncementClick(announcement)}
+              >
                 <div className="flex flex-row gap-2 mb-2">
-                  <CircleNotificationsIcon className="" />
+                  <CircleNotificationsIcon />
                   <h1 className="text-lg font-semibold line-clamp-2">{announcement.title}</h1>
                 </div>
-                <p className="text-sm line-clamp-2 mb-2 text-[0.8rem]  text-gray-600">{announcement.description}</p>
+                <p className="text-sm line-clamp-2 mb-2 text-[0.8rem] text-gray-600">{announcement.description}</p>
                 <div className="w-full py-2 text-xs flex justify-end border-t-[1px] text-slate-500 border-black">
                   <p>{new Date(announcement.date).toLocaleDateString()}</p>
                 </div>
               </section>
-            )
+            ))}
+
+            {/* Modal */}
+            {isModalOpen && selectedAnnouncement && (
+              <div className="fixed inset-0 flex justify-center items-center bg-gray-600 bg-opacity-50 z-50">
+                <div className="flex flex-col justify-between bg-white p-6 rounded-md w-1/2 h-1/2 max-w-[90%]">
+                <div >
+                  <h2 className="text-2xl font-semibold mb-4">{selectedAnnouncement.title}</h2>
+                  <p className=" mb-4">{selectedAnnouncement.description}</p>
+                  <p className="text-sm text-gray-500">{new Date(selectedAnnouncement.date).toLocaleDateString()}</p>
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button onClick={closeModal} className="bg-blue-500 text-white px-4 py-2 rounded-md">
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </section>
 

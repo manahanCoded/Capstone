@@ -48,5 +48,4 @@ const getAiResponse = async (req, res) => {
 
 
 
-
 export { getAiResponse };

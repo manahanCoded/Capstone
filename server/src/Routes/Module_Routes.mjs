@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addModule, allModule, editModule, getModuleId, addQuestion, allQuestion , deleteModule, user_score} from "./Controllers/Module_Controller.mjs";
+import { addModule, allModule, editModule, getModuleId, addQuestion, allQuestion , deleteModule, user_score, getUser_score} from "./Controllers/Module_Controller.mjs";
 
 const router = Router() 
 
@@ -18,5 +18,7 @@ router.post('/addQuestions', addQuestion)
 router.delete('/deleteModules/:id', deleteModule)
 
 router.post("/update-module-score", user_score)
+
+router.get("/get-user-score/:id", getUser_score)
 
 export default router

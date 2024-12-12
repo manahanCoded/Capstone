@@ -9,12 +9,17 @@ import Edit from "./Edit";
 import Emails from "./Emails";
 import MaxWidthWrapper from "@/components/MaxWidthWrapper";
 import Dashboard from "./Dashboard";
+import Reviewer from "./Reviewer";
 
 
 export default function Profile() {
     const router = useRouter()
     const [checkUser, setCheckUser] = useState<checkAdmin>();
     const [openTab, setOpenTab] = useState("profile")
+    
+    const handleReview = () => {
+        setOpenTab("reviewer");
+    };
 
     useEffect(() => {
         async function checkUser() {
@@ -55,27 +60,33 @@ export default function Profile() {
                     <section className="flex flex-col items-center gap-6  py-6 rounded-l-md h-full w-72 bg-red-600 text-white">
                         <img src="/Icons/accountWhite.png" alt="" className="h-16 w-16" />
                         <div className="flex flex-col text-center items-center w-full bg-white">
-                            <p className={` ${openTab === "profile" ? "bg-white" : "bg-gray-200 "} p-3 w-full  hover:bg-slate-400  border-gray-300 text-black cursor-pointer`}
+                            <p className={` ${openTab === "profile" ? "bg-white border-l-4 border-black" : "bg-gray-100 "} p-3 w-full  hover:bg-slate-400   text-black cursor-pointer`}
                                 onClick={() => setOpenTab("profile")}
                             >
                                 Profile
                             </p>
-                            <p className={` ${openTab === "dashboard" ? "bg-white" : "bg-gray-200 "} p-3 w-full hover:bg-slate-400  border-gray-300 text-black cursor-pointer`}
+                            <p className={` ${openTab === "dashboard" ? "bg-white border-l-4 border-black" : "bg-gray-100 "} p-3 w-full hover:bg-slate-400   text-black cursor-pointer`}
                                 onClick={() => setOpenTab("dashboard")}
                             >
                                 Dashboard
                             </p>
-                            <p className={` ${openTab === "applicantion" ? "bg-white" : "bg-gray-200 "} p-3 w-full hover:bg-slate-400  border-gray-300 text-black cursor-pointer`}
+                            <p className={` ${openTab === "applicantion" ? "bg-white border-l-4 border-black" : "bg-gray-100 "} p-3 w-full hover:bg-slate-400   text-black cursor-pointer`}
                                 onClick={() => setOpenTab("applicantion")}
                             >
                                  Applications
                             </p>
+                            <p className={` ${openTab === "reviewer" ? "bg-white border-l-4 border-black" : "bg-gray-100 "} p-3 w-full hover:bg-slate-400   text-black cursor-pointer`}
+                                onClick={() => setOpenTab("reviewer")}
+                            >
+                                 Reviewer
+                            </p>
                         </div>
                     </section>
                     <div className="w-full h-full px-4 py-2 ">
-                    {openTab === "profile" ? <Edit />: null}
+                    {openTab === "profile" && <Edit />}
                     {openTab === "applicantion" ? checkUser && <Emails checkUser={checkUser} />: null}
-                    {openTab === "dashboard" ? <Dashboard/>: null} 
+                    {openTab === "dashboard" && <Dashboard review={handleReview} />}
+                    {openTab === "reviewer" && <Reviewer />}
                     </div>
                 </section>
             </MaxWidthWrapper>

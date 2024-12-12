@@ -36,16 +36,16 @@ export default function Games() {
   return (
     <div className="flex flex-col items-center justify-center mt-20">
       <h1 className="text-3xl font-semibold mb-6">Challenge Yourself</h1>
-      <div className="md:w-1/2 max-w-screen-2xl h-screen ">
-        <div className="space-y-4">
+      <div className=" max-w-screen-2xl h-auto">
+        <div className="flex flex-wrap justify-center gap-8">
           {games.map((game, index) => (
-            <div key={index} className="p-2">
+            <div key={index} className="p-4 w-full sm:w-1/2 lg:w-1/3">
               <Card className="cursor-pointer hover:shadow-lg transition-shadow duration-200" onClick={() => router.push(game.path)}>
-                <CardContent className="flex flex-col items-center justify-center p-4">
-                  <h2 className="text-xl font-semibold mb-4">{game.title}</h2>
-                  <img src={game.img} alt={game.title} className="mb-4 border-y-[1px]" />
-                  <p className="text-center text-sm">{game.description}</p>
-                  <p className='mt-4'>Click to Start</p>
+                <CardContent className="flex flex-col items-center justify-center p-6">
+                  <h2 className="text-2xl font-semibold mb-4">{game.title}</h2>
+                  <img src={game.img} alt={game.title} className="mb-4 border-y-[1px] w-full h-48 object-cover" />
+                  <p className="text-center text-lg">{game.description}</p>
+                  <p className="mt-4 text-sm">Click to Start</p>
                 </CardContent>
               </Card>
             </div>

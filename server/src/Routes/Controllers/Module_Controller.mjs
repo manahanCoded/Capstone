@@ -121,7 +121,7 @@ const allQuestion = async (req, res) => {
 
 
 const user_score = async (req, res) => {
-  const { user_id, module_id, score, passed, attempt_number, time_spent, feedback } = req.body;
+  const { user_id, module_id,  completed, score, passed, attempt_number, time_spent, feedback, prefect_score } = req.body;
 
   if (!user_id || !module_id || score === undefined || passed === undefined) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -136,15 +136,15 @@ const user_score = async (req, res) => {
     if (existingQuiz.rows.length > 0) {
       await db.query(
         `UPDATE module_scores 
-        SET score = $1, passed = $2, attempt_number = $3, time_spent = $4, feedback = $5 
-        WHERE user_id = $6 AND module_id = $7`,
-        [score, passed, attempt_number, time_spent, feedback, user_id, module_id]
+        SET score = $1, passed = $2, attempt_number = $3, time_spent = $4, feedback = $5 , completed = $6, prefect_score =$7
+        WHERE user_id = $8 AND module_id = $9`,
+        [score, passed, attempt_number, time_spent, feedback, completed, prefect_score ,user_id, module_id]
       );
     } else {
       await db.query(
-        `INSERT INTO module_scores (user_id, module_id, score, passed, attempt_number, time_spent, feedback) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [user_id, module_id, score, passed, attempt_number, time_spent, feedback]
+        `INSERT INTO module_scores (user_id, module_id, score, passed, attempt_number, time_spent, feedback, completed, prefect_score) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [user_id, module_id, score, passed, attempt_number, time_spent, feedback, completed, prefect_score]
       );
     }
     res.status(200).json({ message: 'Quiz progress saved successfully!' });
@@ -154,6 +154,25 @@ const user_score = async (req, res) => {
   }
 };
 
+const getUser_score = async (req, res) => {
+  const { id } = req.params;
 
+  if (!id || isNaN(id)) {
+      return res.status(400).json({ error: 'Invalid id parameter' });
+  }
 
-export { allModule, addModule, getModuleId, editModule, addQuestion, allQuestion ,deleteModule, user_score};
+  try {
+      const response = await db.query("SELECT * FROM module_scores WHERE user_id = $1", [id]);
+
+      if (response.rows.length === 0) {
+          return res.status(404).json({ message: 'No scores found for this user' });
+      }
+
+      res.status(200).json(response.rows);
+  } catch (error) {
+      console.error("Database error:", error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export { allModule, addModule, getModuleId, editModule, addQuestion, allQuestion ,deleteModule, user_score, getUser_score};
